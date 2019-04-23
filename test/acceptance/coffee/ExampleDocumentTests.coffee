@@ -1,6 +1,7 @@
 Client = require "./helpers/Client"
 request = require "request"
-require("chai").should()
+chai = require("chai")
+chai.should()
 fs = require "fs"
 ChildProcess = require "child_process"
 ClsiApp = require "./helpers/ClsiApp"
@@ -112,6 +113,7 @@ describe "Example Documents", ->
 					Client.compileDirectory @project_id, fixturePath("examples"), example_dir, 4242, (error, res, body) =>
 						if error || body?.compile?.status is "failure"
 							console.log "DEBUG: error", error, "body", JSON.stringify(body)
+							chai.assert false, "Compile failed"
 						pdf = Client.getOutputFile body, "pdf"
 						downloadAndComparePdf(@project_id, example_dir, pdf.url, done)
 
@@ -119,6 +121,7 @@ describe "Example Documents", ->
 					Client.compileDirectory @project_id, fixturePath("examples"), example_dir, 4242, (error, res, body) =>
 						if error || body?.compile?.status is "failure"
 							console.log "DEBUG: error", error, "body", JSON.stringify(body)
+							chai.assert false, "Compile failed"
 						pdf = Client.getOutputFile body, "pdf"
 						downloadAndComparePdf(@project_id, example_dir, pdf.url, done)
 
