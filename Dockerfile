@@ -1,4 +1,4 @@
-FROM node:10.15.0 as app
+FROM node:10.15.3 as app
 
 WORKDIR /app
 
@@ -12,7 +12,7 @@ COPY . /app
 
 RUN npm run compile:all
 
-FROM node:10.15.0
+FROM node:10.15.3
 
 WORKDIR /app
 
