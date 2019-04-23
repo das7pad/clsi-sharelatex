@@ -14,10 +14,13 @@ RUN npm run compile:all
 
 FROM node:10.15.0
 
-COPY --from=app /app /app
-
 WORKDIR /app
-RUN chmod 0755 ./install_deps.sh && ./install_deps.sh
-ENTRYPOINT ["/bin/sh", "entrypoint.sh"]
 
 CMD ["node", "--expose-gc", "app.js"]
+ENTRYPOINT ["/bin/sh", "entrypoint.sh"]
+
+COPY --from=app /app/install_deps.sh /app
+RUN sh ./install_deps.sh
+
+COPY --from=app /app /app
+
