@@ -109,7 +109,6 @@ broken = [
 	'knitr_utf8',
 	'latex_compiler',
 	'makeindex-custom-style',
-	'minted',
 	'nomenclature',
 ]
 
