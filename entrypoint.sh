@@ -15,11 +15,8 @@ chown -R node:node /app/cache
 mkdir -p /app/compiles
 chown -R node:node /app/compiles
 
-chown -R node:node /app/bin/synctex
 mkdir -p /app/test/acceptance/fixtures/tmp/
-chown -R node:node /app
-
-chown -R node:node /app/bin
+chown -R node:node /app/test/acceptance/fixtures/tmp/
 
 ./bin/install_texlive_gce.sh
 exec runuser -u node -- "$@"
