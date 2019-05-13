@@ -25,3 +25,9 @@ RUN /app/install_deps.sh
 
 COPY --from=app /app /app
 
+
+ARG RELEASE
+ARG COMMIT
+ENV RELEASE=${RELEASE} \
+    SENTRY_RELEASE=${RELEASE} \
+    COMMIT=${COMMIT}
