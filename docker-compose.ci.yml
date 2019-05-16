@@ -1,7 +1,7 @@
 # This file was auto-generated, do not edit it directly.
 # Instead run bin/update_build_scripts from
 # https://github.com/das7pad/sharelatex-dev-env
-# Version: 3.1.0
+# Version: 3.2.0
 
 version: "3.1"
 
@@ -26,6 +26,9 @@ services:
     command: npm run test:acceptance:_run
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:rw,z
+      - ./compiles:/app/compiles:z
+      - ./cache:/app/cache:z
+      - ./bin/synctex:/app/bin/synctex:z
 
 
 

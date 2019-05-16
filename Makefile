@@ -1,7 +1,7 @@
 # This file was auto-generated, do not edit it directly.
 # Instead run bin/update_build_scripts from
 # https://github.com/das7pad/sharelatex-dev-env
-# Version: 3.1.0
+# Version: 3.2.0
 
 BUILD_NUMBER ?= local
 BRANCH_NAME ?= $(shell git rev-parse --abbrev-ref HEAD)
@@ -38,6 +38,13 @@ test_acceptance: test_clean test_acceptance_pre_run test_acceptance_run
 
 test_acceptance_run:
 	@[ ! -d test/acceptance ] && echo "clsi has no acceptance tests" || $(DOCKER_COMPOSE) run --rm test_acceptance
+
+clean_test_acceptance:
+	$(DOCKER_COMPOSE) run --rm test_acceptance \
+		bash -c 'rm -rf \
+			/app/cache/* \
+			/app/compiles/* \
+		'
 
 test_clean:
 	$(DOCKER_COMPOSE) down -v -t 0
