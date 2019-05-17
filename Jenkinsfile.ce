@@ -29,7 +29,7 @@ pipeline {
             timeout(time: 2, unit: 'HOURS')
           }
           environment {
-            TEXLIVE_IMAGE = "$SHARELATEX_DOCKER_REPOS/texlive:full-2017"
+            TEXLIVE_IMAGE = "$SHARELATEX_DOCKER_REPOS/texlive:2017.1-full"
           }
           steps {
             sh  '''
