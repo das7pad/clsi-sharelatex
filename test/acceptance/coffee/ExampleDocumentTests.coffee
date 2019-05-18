@@ -16,6 +16,8 @@ try
 catch err
 	console.log err, fixturePath("tmp"), "unable to create fixture tmp path"
 
+MOCHA_LATEX_TIMEOUT = 60 * 1000
+
 convertToPng = (pdfPath, pngPath, callback = (error) ->) ->
 	command = "convert #{fixturePath(pdfPath)} #{fixturePath(pngPath)}"
 	console.log "COMMAND"
@@ -127,6 +129,7 @@ describe "Example Documents", ->
 					@project_id = Client.randomId() + "_" + example_dir
 
 				it "should generate the correct pdf", (done) ->
+					this.timeout(MOCHA_LATEX_TIMEOUT)
 					Client.compileDirectory @project_id, fixturePath("examples"), example_dir, 4242, (error, res, body) =>
 						if error || body?.compile?.status is "failure"
 							console.log "DEBUG: error", error, "body", JSON.stringify(body)
@@ -135,6 +138,7 @@ describe "Example Documents", ->
 						downloadAndComparePdf(@project_id, example_dir, pdf.url, done)
 
 				it "should generate the correct pdf on the second run as well", (done) ->
+					this.timeout(MOCHA_LATEX_TIMEOUT)
 					Client.compileDirectory @project_id, fixturePath("examples"), example_dir, 4242, (error, res, body) =>
 						if error || body?.compile?.status is "failure"
 							console.log "DEBUG: error", error, "body", JSON.stringify(body)
