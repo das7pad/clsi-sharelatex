@@ -1,6 +1,6 @@
 clsi
 --language=coffeescript
---node-version=10.15.3
+--node-version=10.16.0
 --acceptance-creds=None
 --dependencies=
 --docker-repos=gcr.io/overleaf-ops
