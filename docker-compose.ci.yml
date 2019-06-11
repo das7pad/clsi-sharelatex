@@ -14,6 +14,7 @@ services:
     build: .
     image: ci/$PROJECT_NAME:$BRANCH_NAME-$BUILD_NUMBER
     environment:
+      LOG_LEVEL: fatal
       MOCHA_GREP: ${MOCHA_GREP}
       TEXLIVE_IMAGE: quay.io/sharelatex/texlive-full:2017.1
       TEXLIVE_IMAGE_USER: "tex"
