@@ -105,7 +105,6 @@ broken = [
 	'feynmf',
 	'feynmp',
 	'glossaries',
-	'gnuplot',
 	'hebrew',
 	'knitr',
 	'knitr_utf8',
