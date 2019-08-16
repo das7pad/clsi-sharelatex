@@ -14,7 +14,6 @@ COPY . /app
 
 RUN make build_app
 
-
 FROM node:10.16.3
 
 CMD ["node", "--expose-gc", "app.js"]
@@ -27,7 +26,6 @@ COPY install_deps.sh /app
 RUN /app/install_deps.sh
 
 COPY --from=app /app /app
-
 
 ARG RELEASE
 ARG COMMIT

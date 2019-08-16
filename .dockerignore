@@ -25,7 +25,6 @@
 !/install_deps.sh
 !/entrypoint.sh
 
-
 !/bin/synctex
 # scripts #
 ###########
@@ -41,7 +40,6 @@
 ##############
 # app config #
 !/config/settings.defaults.coffee
-
 
 !/seccomp/clsi-profile.json
 !/synctex.profile
