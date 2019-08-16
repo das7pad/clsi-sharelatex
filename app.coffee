@@ -146,15 +146,6 @@ app.get "/health_check", (req, res)->
 app.get "/smoke_test_force", (req, res)->
 	smokeTest.run(require.resolve(__dirname + "/test/smoke/js/SmokeTests.js"))(req, res)
 
-profiler = require "v8-profiler-node8"
-app.get "/profile", (req, res) ->
-	time = parseInt(req.query.time || "1000")
-	profiler.startProfiling("test")
-	setTimeout () ->
-		profile = profiler.stopProfiling("test")
-		res.json(profile)
-	, time
-
 app.get "/heapdump", (req, res)->
 	require('heapdump').writeSnapshot '/tmp/' + Date.now() + '.clsi.heapsnapshot', (err, filename)->
 		res.send filename
