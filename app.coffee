@@ -26,6 +26,7 @@ require("./app/js/db").sync()
 
 express = require "express"
 bodyParser = require "body-parser"
+serveStatic = require('serve-static')
 app = express()
 
 Metrics.injectMetricsRoute(app)
@@ -83,7 +84,7 @@ ForbidSymlinks = require "./app/js/StaticServerForbidSymlinks"
 # create a static server which does not allow access to any symlinks
 # avoids possible mismatch of root directory between middleware check
 # and serving the files
-staticServer = ForbidSymlinks express.static, Settings.path.compilesDir, setHeaders: (res, path, stat) ->
+staticServer = ForbidSymlinks serveStatic, Settings.path.compilesDir, setHeaders: (res, path, stat) ->
 	if Path.basename(path) == "output.pdf"
 		# Calculate an etag in the same way as nginx
 		# https://github.com/tj/send/issues/65

@@ -28,8 +28,9 @@ module.exports = Client =
 
 	runServer: (port, directory) ->
 		express = require("express")
+		serveStatic = require('serve-static')
 		app = express()
-		app.use express.static(directory)
+		app.use serveStatic(directory)
 		console.log("starting test server on", port, host)
 		app.listen(port, host).on "error", (error) ->
 			console.error "error starting server:", error.message
