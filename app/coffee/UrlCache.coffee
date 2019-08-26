@@ -95,7 +95,7 @@ module.exports = UrlCache =
 
 	_findUrlDetails: (project_id, url, callback = (error, urlDetails) ->) ->
 		job = (cb)->
-			db.UrlCache.find(where: { url: url, project_id: project_id })
+			db.UrlCache.findOne(where: { url: url, project_id: project_id })
 				.then((urlDetails) -> cb null, urlDetails)
 				.error cb
 		dbQueue.queue.push job, callback
@@ -105,7 +105,7 @@ module.exports = UrlCache =
 			db.UrlCache.findOrCreate(where: {url: url, project_id: project_id})
 				.spread(
 					(urlDetails, created) ->
-						urlDetails.updateAttributes(lastModified: lastModified)
+						urlDetails.update(lastModified: lastModified)
 							.then(() -> cb())
 							.error(cb)
 				)
