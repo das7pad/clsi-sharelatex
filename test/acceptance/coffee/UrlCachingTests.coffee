@@ -9,9 +9,10 @@ host = "localhost"
 Server =
 	run: () ->
 		express = require "express"
+		serveStatic = require('serve-static')
 		app = express()
 
-		staticServer = express.static __dirname + "/../fixtures/"
+		staticServer = serveStatic __dirname + "/../fixtures/"
 		app.get "/:random_id/*", (req, res, next) =>
 			@getFile(req.url)
 			req.url = "/" + req.params[0]
