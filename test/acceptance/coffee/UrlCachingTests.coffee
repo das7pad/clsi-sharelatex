@@ -28,6 +28,8 @@ Server =
 Server.run()
 
 describe "Url Caching", ->
+	@timeout(10000)
+
 	describe "Downloading an image for the first time", ->
 		before (done) ->
 			@project_id = Client.randomId()

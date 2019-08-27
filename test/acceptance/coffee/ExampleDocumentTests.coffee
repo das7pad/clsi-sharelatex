@@ -114,6 +114,8 @@ broken = [
 ]
 
 describe "Example Documents", ->
+	@timeout(10000)
+
 	before (done) ->
 		ChildProcess.exec("rm test/acceptance/fixtures/tmp/*").on "exit", () -> 
 			ClsiApp.ensureRunning done

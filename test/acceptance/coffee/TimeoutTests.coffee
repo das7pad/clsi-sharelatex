@@ -5,6 +5,8 @@ ClsiApp = require "./helpers/ClsiApp"
 
 
 describe "Timed out compile", ->
+	@timeout(15000)
+
 	before (done) ->
 		@request =
 			options:
