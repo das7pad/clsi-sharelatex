@@ -42,7 +42,7 @@ test_acceptance_run:
 	$(DOCKER_COMPOSE) run --rm test_acceptance
 
 clean_test_acceptance:
-	$(DOCKER_COMPOSE) run --rm
+	$(DOCKER_COMPOSE) run --rm \
 		--entrypoint bash \
 		test_acceptance \
 			-c 'rm -rf \
