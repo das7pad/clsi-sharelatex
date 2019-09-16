@@ -6,7 +6,7 @@ Settings = require "settings-sharelatex"
 logger = require "logger-sharelatex"
 logger.initialize("clsi")
 if Settings.sentry?.dsn?
-	logger.initializeErrorReporting(Settings.sentry.dsn)
+	logger.initializeErrorReporting(Settings.sentry.dsn, Settings.sentry.options)
 
 smokeTest = require "smoke-test-sharelatex"
 ContentTypeMapper = require "./app/js/ContentTypeMapper"
