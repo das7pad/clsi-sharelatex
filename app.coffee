@@ -8,6 +8,11 @@ logger.initialize("clsi")
 if Settings.sentry?.dsn?
 	logger.initializeErrorReporting(Settings.sentry.dsn, Settings.sentry.options)
 
+if Settings.catchErrors
+	process.removeAllListeners "uncaughtException"
+	process.on "uncaughtException", (error) ->
+		logger.error err: error, "uncaughtException"
+
 smokeTest = require "smoke-test-sharelatex"
 ContentTypeMapper = require "./app/js/ContentTypeMapper"
 Errors = require './app/js/Errors'
