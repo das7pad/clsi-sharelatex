@@ -1,5 +1,6 @@
 spawn = require("child_process").spawn
 logger = require "logger-sharelatex"
+_ = require "underscore"
 
 logger.info "using standard command runner"
 
@@ -21,6 +22,7 @@ module.exports = CommandRunner =
 		proc.stdout.on "data", (data)->
 			stdout += data
 
+		callback = _.once(callback) # avoid double call for error and close event
 		proc.on "error", (err)->
 			logger.err err:err, project_id:project_id, command: command, directory: directory, "error running command"
 			callback(err)
