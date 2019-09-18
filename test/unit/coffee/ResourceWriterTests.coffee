@@ -11,7 +11,6 @@ describe "ResourceWriter", ->
 				mkdir: sinon.stub().callsArg(1)
 				unlink: sinon.stub().callsArg(1)
 			"./ResourceStateManager": @ResourceStateManager = {}
-			"wrench": @wrench = {}
 			"./UrlCache" : @UrlCache = {}
 			"mkdirp" : @mkdirp = sinon.stub().callsArg(1)
 			"./OutputFileFinder": @OutputFileFinder = {}

@@ -572,16 +572,6 @@
       "resolved": "https://registry.npmjs.org/builtin-modules/-/builtin-modules-3.1.0.tgz",
       "integrity": "sha512-k0KL0aWZuBt2lrxrcASWDfwOLMnodeQjodT/1SxEQAXsHANgo6ZC/VEaSEHCXt7aSTZ4/4H5LKa+tBXmW7Vtvw=="
     },
-    "bunyan": {
-      "version": "0.22.3",
-      "resolved": "https://registry.npmjs.org/bunyan/-/bunyan-0.22.3.tgz",
-      "integrity": "sha1-ehncG0yMZF90AkGnQPIkUUfGfsI=",
-      "dev": true,
-      "requires": {
-        "dtrace-provider": "0.2.8",
-        "mv": "~2"
-      }
-    },
     "buster-core": {
       "version": "0.6.4",
       "resolved": "https://registry.npmjs.org/buster-core/-/buster-core-0.6.4.tgz",
@@ -827,13 +817,6 @@
       "version": "2.0.1",
       "resolved": "https://registry.npmjs.org/dottie/-/dottie-2.0.1.tgz",
       "integrity": "sha512-ch5OQgvGDK2u8pSZeSYAQaV/lczImd7pMJ7BcEPXmnFVjy4yJIzP6CsODJUTH8mg1tyH1Z2abOiuJO3DjZ/GBw=="
-    },
-    "dtrace-provider": {
-      "version": "0.2.8",
-      "resolved": "https://registry.npmjs.org/dtrace-provider/-/dtrace-provider-0.2.8.tgz",
-      "integrity": "sha1-4kPxkhmqlfvw2PL/sH9b1k6U/iA=",
-      "dev": true,
-      "optional": true
     },
     "duplexify": {
       "version": "3.7.1",
@@ -1538,15 +1521,6 @@
       "version": "1.0.0",
       "resolved": "https://registry.npmjs.org/lsmod/-/lsmod-1.0.0.tgz",
       "integrity": "sha1-mgD3bco26yP6BTUK/htYXUKZ5ks="
-    },
-    "lynx": {
-      "version": "0.0.11",
-      "resolved": "https://registry.npmjs.org/lynx/-/lynx-0.0.11.tgz",
-      "integrity": "sha1-LPoU5EP9LZKlm3efQVZ84cxpZaM=",
-      "requires": {
-        "mersenne": "~0.0.3",
-        "statsd-parser": "~0.0.4"
-      }
     },
     "media-typer": {
       "version": "0.3.0",
@@ -2840,11 +2814,6 @@
       "version": "1.0.2",
       "resolved": "https://registry.npmjs.org/wrappy/-/wrappy-1.0.2.tgz",
       "integrity": "sha1-tSQ9jz7BqjXxNkYFvA0QNuMKtp8="
-    },
-    "wrench": {
-      "version": "1.5.9",
-      "resolved": "https://registry.npmjs.org/wrench/-/wrench-1.5.9.tgz",
-      "integrity": "sha1-QRaRxjqbJTGxcAJnJ5veyiOyFCo="
     },
     "xtend": {
       "version": "4.0.1",
