@@ -13,7 +13,7 @@ if Settings.catchErrors
 	process.on "uncaughtException", (error) ->
 		logger.error err: error, "uncaughtException"
 
-smokeTest = require "smoke-test-sharelatex"
+smokeTest = require "./test/smoke/js/SmokeTests"
 ContentTypeMapper = require "./app/js/ContentTypeMapper"
 Errors = require './app/js/Errors'
 
@@ -130,27 +130,18 @@ app.get "/oops", (req, res, next) ->
 app.get "/status", (req, res, next) ->
 	res.send "CLSI is alive\n"
 
-resCacher =
-	contentType:(@setContentType)->
-	send:(@code, @body)->
-
-	#default the server to be down
-	code:500
-	body:{}
-	setContentType:"application/json"
-
 if Settings.smokeTest
 	do runSmokeTest = ->
 		logger.log("running smoke tests")
-		smokeTest.run(require.resolve(__dirname + "/test/smoke/js/SmokeTests.js"))({}, resCacher)
+		smokeTest.triggerRun (error) ->
+			logger.error({err: error}, "smoke tests failed")
 		setTimeout(runSmokeTest, 30 * 1000)
 
 app.get "/health_check", (req, res)->
-	res.contentType(resCacher?.setContentType)
-	res.status(resCacher?.code).send(resCacher?.body)
+	smokeTest.sendLastResult(req, res)
 
 app.get "/smoke_test_force", (req, res)->
-	smokeTest.run(require.resolve(__dirname + "/test/smoke/js/SmokeTests.js"))(req, res)
+	smokeTest.sendNewResult(req, res)
 
 app.get "/heapdump", (req, res)->
 	require('heapdump').writeSnapshot '/tmp/' + Date.now() + '.clsi.heapsnapshot', (err, filename)->

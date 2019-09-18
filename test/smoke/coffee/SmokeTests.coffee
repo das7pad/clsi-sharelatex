@@ -1,6 +1,3 @@
-chai = require("chai")
-chai.should() unless Object.prototype.should?
-expect = chai.expect
 request = require "request"
 Settings = require "settings-sharelatex"
 
@@ -8,8 +5,31 @@ buildUrl = (path) -> "http://#{Settings.internal.clsi.host}:#{Settings.internal.
 
 url = buildUrl("project/smoketest-#{process.pid}/compile")
 
-describe "Running a compile", ->
-	before (done) ->
+module.exports = SmokeTests =
+	sendResponse: (res, error) ->
+		if error?
+			code = 500
+			body = error.message
+		else
+			code = 200
+			body = 'OK'
+		res.contentType("text/plain")
+		res.status(code).send(body)
+
+	sendNewResult: (req, res) ->
+		SmokeTests.run (error) ->
+			SmokeTests.sendResponse(res, error)
+
+	lastError: new Error('SmokeTestsPending')
+	sendLastResult: (req, res) ->
+		SmokeTests.sendResponse(res, SmokeTests.lastError)
+
+	triggerRun: (cb=(error) ->) ->
+		SmokeTests.run (error) ->
+			SmokeTests.lastError = error
+			cb(error)
+
+	run: (done=(error)->) ->
 		request.post {
 			url: url
 			json:
@@ -50,15 +70,17 @@ describe "Running a compile", ->
 \\end{document}
 						"""
 					]
-		}, (@error, @response, @body) =>
-			done()
+		}, (error, response, body) =>
+			return done(error) if error
 
-	it "should return the pdf", ->
-		for file in @body.compile.outputFiles
-			return if file.type == "pdf"
-		throw new Error("no pdf returned")
-	
-	it "should return the log", ->
-		for file in @body.compile.outputFiles
-			return if file.type == "log"
-		throw new Error("no log returned")
+			pdfFound = false
+			logFound = false
+			for file in body.compile.outputFiles
+				if file.type == "pdf"
+					pdfFound = true
+				if file.type == "log"
+					logFound = true
+
+			return done(new Error("no pdf returned")) unless pdfFound
+			return done(new Error("no log returned")) unless logFound
+			done()
