@@ -1,5 +1,6 @@
 spawn = require("child_process").spawn
 logger = require "logger-sharelatex"
+_ = require "underscore"
 
 logger.info "using standard command runner"
 
@@ -17,6 +18,7 @@ module.exports = CommandRunner =
 		# run command as detached process so it has its own process group (which can be killed if needed)
 		proc = spawn command[0], command.slice(1), stdio: "inherit", cwd: directory, detached: true, env: env
 
+		callback = _.once(callback) # avoid double call for error and close event
 		proc.on "error", (err)->
 			logger.err err:err, project_id:project_id, command: command, directory: directory, "error running command"
 			callback(err)
