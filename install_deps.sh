@@ -1,8 +1,10 @@
-/bin/sh
-wget -qO- https://get.docker.com/ | sh
-apt-get install \
-    poppler-utils \
-    ghostscript \
-    qpdf \
-    --yes
-npm rebuild
+#!/bin/sh
+
+apt-get update && \
+  \
+  apt-get install --yes \
+      poppler-utils \
+      ghostscript \
+      qpdf \
+  \
+&& rm -rf /var/lib/apt/lists/*

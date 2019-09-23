@@ -1,10 +1,5 @@
 #!/bin/sh
 
-echo "Changing permissions of /var/run/docker.sock for sibling containers"
-ls -al /var/run/docker.sock
-docker --version
-cat /etc/passwd
-
 DOCKER_GROUP=$(stat -c '%g' /var/run/docker.sock)
 groupadd --non-unique --gid ${DOCKER_GROUP} dockeronhost
 usermod -aG dockeronhost node
