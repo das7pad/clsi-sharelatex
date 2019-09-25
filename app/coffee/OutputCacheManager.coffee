@@ -186,7 +186,7 @@ module.exports = OutputCacheManager =
 					callback()
 				else
 					# call the optimiser for the file too
-					OutputFileOptimiser.optimiseFile src, dst, callback
+					OutputFileOptimiser.optimiseFile dst, callback
 
 	_checkIfShouldCopy: (src, callback = (err, shouldCopy) ->) ->
 		return callback(null, !Path.basename(src).match(/^strace/))

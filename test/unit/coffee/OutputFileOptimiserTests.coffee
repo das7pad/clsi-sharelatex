@@ -20,44 +20,43 @@ describe "OutputFileOptimiser", ->
 	describe "optimiseFile", ->
 		beforeEach ->
 			@src = "./output.pdf"
-			@dst = "./output.pdf"
 
 		describe "when the file is not a pdf file", ->
 			beforeEach (done)->
 				@src = "./output.log"
 				@OutputFileOptimiser.checkIfPDFIsOptimised = sinon.stub().callsArgWith(1, null, false)
-				@OutputFileOptimiser.optimisePDF = sinon.stub().callsArgWith(2, null)
-				@OutputFileOptimiser.optimiseFile @src, @dst, done
+				@OutputFileOptimiser.optimisePDF = sinon.stub().callsArgWith(1, null)
+				@OutputFileOptimiser.optimiseFile @src, done
 
 			it "should not check if the file is optimised", ->
 				@OutputFileOptimiser.checkIfPDFIsOptimised.calledWith(@src).should.equal false
 
 			it "should not optimise the file", ->
-				@OutputFileOptimiser.optimisePDF.calledWith(@src, @dst).should.equal false
+				@OutputFileOptimiser.optimisePDF.calledWith(@src).should.equal false
 
 		describe "when the pdf file is not optimised", ->
 			beforeEach (done) ->
 				@OutputFileOptimiser.checkIfPDFIsOptimised = sinon.stub().callsArgWith(1, null, false)
-				@OutputFileOptimiser.optimisePDF = sinon.stub().callsArgWith(2, null)
-				@OutputFileOptimiser.optimiseFile @src, @dst, done
+				@OutputFileOptimiser.optimisePDF = sinon.stub().callsArgWith(1, null)
+				@OutputFileOptimiser.optimiseFile @src, done
 
 			it "should check if the pdf is optimised", ->
 				@OutputFileOptimiser.checkIfPDFIsOptimised.calledWith(@src).should.equal true
 
 			it "should optimise the pdf", ->
-				@OutputFileOptimiser.optimisePDF.calledWith(@src, @dst).should.equal true
+				@OutputFileOptimiser.optimisePDF.calledWith(@src).should.equal true
 
 		describe "when the pdf file is optimised", ->
 			beforeEach (done) ->
 				@OutputFileOptimiser.checkIfPDFIsOptimised = sinon.stub().callsArgWith(1, null, true)
-				@OutputFileOptimiser.optimisePDF = sinon.stub().callsArgWith(2, null)
-				@OutputFileOptimiser.optimiseFile @src, @dst, done
+				@OutputFileOptimiser.optimisePDF = sinon.stub().callsArgWith(1, null)
+				@OutputFileOptimiser.optimiseFile @src, done
 
 			it "should check if the pdf is optimised", ->
 				@OutputFileOptimiser.checkIfPDFIsOptimised.calledWith(@src).should.equal true
 
 			it "should not optimise the pdf", ->
-				@OutputFileOptimiser.optimisePDF.calledWith(@src, @dst).should.equal false
+				@OutputFileOptimiser.optimisePDF.calledWith(@src).should.equal false
 
 	describe "checkIfPDFISOptimised", ->
 		beforeEach () ->

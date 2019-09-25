@@ -7,13 +7,12 @@ _ = require "underscore"
 
 module.exports = OutputFileOptimiser =
 
-	optimiseFile: (src, dst, callback = (error) ->) ->
-		# check output file (src) and see if we can optimise it, storing
-		# the result in the build directory (dst)
+	optimiseFile: (src, callback = (error) ->) ->
+		# check output file (src) and see if we can optimise it inplace
 		if src.match(/\/output\.pdf$/)
 			OutputFileOptimiser.checkIfPDFIsOptimised src, (err, isOptimised) ->
 				return callback(null) if err? or isOptimised
-				OutputFileOptimiser.optimisePDF src, dst, callback
+				OutputFileOptimiser.optimisePDF src, callback
 		else
 			callback (null)
 
@@ -30,8 +29,8 @@ module.exports = OutputFileOptimiser =
 					isOptimised = buffer.toString('ascii').indexOf("/Linearized 1") >= 0
 					callback(null, isOptimised)
 
-	optimisePDF: (src, dst, callback = (error) ->) ->
-		tmpOutput = dst + '.opt'
+	optimisePDF: (src, callback = (error) ->) ->
+		tmpOutput = src + '.opt'
 		args = ["--linearize", src, tmpOutput]
 		logger.log args: args, "running qpdf command"
 
@@ -49,7 +48,7 @@ module.exports = OutputFileOptimiser =
 			if code != 0
 				logger.warn {code, args}, "qpdf returned error"
 				return callback(null) # ignore the error
-			fs.rename tmpOutput, dst, (err) ->
+			fs.rename tmpOutput, src, (err) ->
 				if err?
-					logger.warn {tmpOutput, dst}, "failed to rename output of qpdf command"
+					logger.warn {tmpOutput, src}, "failed to rename output of qpdf command"
 				callback(null) # ignore the error
