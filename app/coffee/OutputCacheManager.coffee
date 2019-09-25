@@ -171,6 +171,17 @@ module.exports = OutputCacheManager =
 				callback(null, true)
 
 	_copyFile: (src, dst, callback) ->
+		if Settings.clsi?.optimiseInDocker
+			# don't run any optimisations on the pdf when they are done
+			# in the docker container
+			optimise = (file, cb) -> cb()
+		else
+			optimise = OutputFileOptimiser.optimiseFile
+
+		optimise src, ->
+			OutputCacheManager._doCopyFile(src, dst, callback)
+
+	_doCopyFile: (src, dst, callback) ->
 		# copy output file into the cache
 		fse.copy src, dst, (err) ->
 			if err?.code is 'ENOENT'
@@ -180,13 +191,7 @@ module.exports = OutputCacheManager =
 				logger.error err: err, src: src, dst: dst, "copy error for file in cache"
 				callback(err)
 			else
-				if Settings.clsi?.optimiseInDocker
-					# don't run any optimisations on the pdf when they are done
-					# in the docker container
-					callback()
-				else
-					# call the optimiser for the file too
-					OutputFileOptimiser.optimiseFile dst, callback
+				callback()
 
 	_checkIfShouldCopy: (src, callback = (err, shouldCopy) ->) ->
 		return callback(null, !Path.basename(src).match(/^strace/))
