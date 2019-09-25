@@ -4,6 +4,8 @@ require("chai").should()
 ClsiApp = require "./helpers/ClsiApp"
 
 describe "Broken LaTeX file", ->
+	@timeout(5000)
+
 	before (done)->
 		@broken_request =
 			resources: [
