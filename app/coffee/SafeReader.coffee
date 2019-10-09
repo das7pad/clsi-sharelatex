@@ -18,7 +18,7 @@ module.exports = SafeReader =
 					return callback(err1) if err1?
 					callback(null, result...)
 
-			buff = new Buffer(size, 0) # fill with zeros
+			buff = Buffer.alloc(size, 0) # fill with zeros
 			fs.read fd, buff, 0, buff.length, 0, (err, bytesRead, buffer) ->
 				return callbackWithClose(err) if err?
 				result = buffer.toString(encoding, 0, bytesRead)

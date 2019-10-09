@@ -63,13 +63,13 @@ describe "OutputFileOptimiser", ->
 			@callback = sinon.stub()
 			@fd = 1234
 			@fs.open = sinon.stub().yields(null, @fd)
-			@fs.read = sinon.stub().withArgs(@fd).yields(null, 100, new Buffer("hello /Linearized 1"))
+			@fs.read = sinon.stub().withArgs(@fd).yields(null, 100, Buffer.from("hello /Linearized 1"))
 			@fs.close = sinon.stub().withArgs(@fd).yields(null)
 			@OutputFileOptimiser.checkIfPDFIsOptimised @src, @callback
 
 		describe "for a linearised file", ->
 			beforeEach () ->
-				@fs.read = sinon.stub().withArgs(@fd).yields(null, 100, new Buffer("hello /Linearized 1"))
+				@fs.read = sinon.stub().withArgs(@fd).yields(null, 100, Buffer.from("hello /Linearized 1"))
 				@OutputFileOptimiser.checkIfPDFIsOptimised @src, @callback
 
 			it "should open the file", ->
@@ -86,7 +86,7 @@ describe "OutputFileOptimiser", ->
 
 		describe "for an unlinearised file", ->
 			beforeEach () ->
-				@fs.read = sinon.stub().withArgs(@fd).yields(null, 100, new Buffer("hello not linearized 1"))
+				@fs.read = sinon.stub().withArgs(@fd).yields(null, 100, Buffer.from("hello not linearized 1"))
 				@OutputFileOptimiser.checkIfPDFIsOptimised @src, @callback
 
 			it "should open the file", ->

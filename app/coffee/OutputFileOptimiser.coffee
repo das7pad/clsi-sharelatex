@@ -18,8 +18,8 @@ module.exports = OutputFileOptimiser =
 
 	checkIfPDFIsOptimised: (file, callback) ->
 		SIZE = 16*1024 # check the header of the pdf
-		result = new Buffer(SIZE)
-		result.fill(0) # prevent leakage of uninitialised buffer
+		# fill with 0 to prevent leakage of uninitialised buffer
+		result = Buffer.alloc(SIZE, 0)
 		fs.open file, "r", (err, fd) ->
 			return callback(err) if err?
 			fs.read fd, result, 0, SIZE, 0, (errRead, bytesRead, buffer) ->
