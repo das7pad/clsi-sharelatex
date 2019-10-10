@@ -25,6 +25,8 @@ RUN /docker_cleanup.sh make build_app
 
 ARG RELEASE
 ARG COMMIT
-ENV RELEASE=${RELEASE} \
+ENV \
+    SERVICE_NAME="clsi" \
+    RELEASE=${RELEASE} \
     SENTRY_RELEASE=${RELEASE} \
     COMMIT=${COMMIT}
