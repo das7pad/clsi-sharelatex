@@ -17,7 +17,7 @@ describe "Timed out compile", ->
 					\\documentclass{article}
 					\\begin{document}
 					\\def\\x{Hello!\\par\\x}
-					\\x					
+					\\x
 					\\end{document}
 				'''
 			]
@@ -31,3 +31,6 @@ describe "Timed out compile", ->
 	it "should return a timedout status", ->
 		@body.compile.status.should.equal "timedout"
 
+	it "should return the log output file name", ->
+		outputFilePaths = @body.compile.outputFiles.map((x) => x.path)
+		outputFilePaths.should.include('output.log')

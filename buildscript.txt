@@ -4,5 +4,5 @@ clsi
 --acceptance-creds=None
 --dependencies=
 --docker-repos=gcr.io/overleaf-ops
---kube=false
+--env-pass-through=TEXLIVE_IMAGE
 --build-target=docker
