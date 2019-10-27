@@ -6,7 +6,7 @@ path = require("path")
 fs = require("fs")
 ClsiApp = require "./helpers/ClsiApp"
 
-describe "Syncing", ->
+describe "Wordcount", ->
 	before (done) ->
 		@request =
 			resources: [
