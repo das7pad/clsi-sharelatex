@@ -143,10 +143,6 @@ app.get "/health_check", (req, res)->
 app.get "/smoke_test_force", (req, res)->
 	smokeTest.sendNewResult(req, res)
 
-app.get "/heapdump", (req, res)->
-	require('heapdump').writeSnapshot '/tmp/' + Date.now() + '.clsi.heapsnapshot', (err, filename)->
-		res.send filename
-
 app.use (error, req, res, next) ->
 	if error instanceof Errors.NotFoundError
 		logger.warn {err: error, url: req.url}, "not found error"
