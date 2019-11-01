@@ -1,8 +1,8 @@
 clsi
 --language=coffeescript
---node-version=10.16.3
+--node-version=10.17.0
 --acceptance-creds=None
 --dependencies=
 --docker-repos=gcr.io/overleaf-ops
---env-pass-through=TEXLIVE_IMAGE
 --build-target=docker
+--env-pass-through=TEXLIVE_IMAGE
