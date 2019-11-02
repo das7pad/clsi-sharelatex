@@ -14,6 +14,7 @@ describe "OutputFileOptimiser", ->
 			"child_process": spawn: @spawn = sinon.stub()
 			"logger-sharelatex": { log: sinon.stub(), warn: sinon.stub() }
 			"./Metrics" : {}
+		, globals: {Buffer}
 		@directory = "/test/dir"
 		@callback = sinon.stub()
 
