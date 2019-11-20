@@ -134,7 +134,8 @@ if Settings.smokeTest
 	do runSmokeTest = ->
 		logger.log("running smoke tests")
 		smokeTest.triggerRun (error) ->
-			logger.error({err: error}, "smoke tests failed")
+			if error?
+				logger.error({err: error}, "smoke tests failed")
 		setTimeout(runSmokeTest, 30 * 1000)
 
 app.get "/health_check", (req, res)->
