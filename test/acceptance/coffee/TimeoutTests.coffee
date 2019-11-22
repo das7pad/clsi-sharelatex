@@ -1,5 +1,4 @@
 Client = require "./helpers/Client"
-request = require "request"
 require("chai").should()
 ClsiApp = require "./helpers/ClsiApp"
 
