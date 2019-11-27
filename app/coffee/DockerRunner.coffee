@@ -339,6 +339,8 @@ module.exports = DockerRunner =
 				do (container) ->
 					DockerRunner.examineOldContainer container, (err, name, id, ttl) ->
 						if name.slice(0, 9) == '/project-' && ttl <= 0
+							# strip the / prefix, the LockManager uses the plain container name
+							name = name.slice(1)
 							jobs.push	(cb) ->
 								DockerRunner.destroyContainer name, id, false, () -> cb()
 								# Ignore errors because some containers get stuck but
