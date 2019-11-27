@@ -381,17 +381,17 @@ describe "DockerRunner", ->
 				.callCount
 				.should.equal 1
 			@DockerRunner.destroyContainer
-				.calledWith("/project-old-container-name", "old-container-id")
+				.calledWith("project-old-container-name", "old-container-id")
 				.should.equal true
 
 		it "should not destroy new containers", ->
 			@DockerRunner.destroyContainer
-				.calledWith("/project-new-container-name", "new-container-id")
+				.calledWith("project-new-container-name", "new-container-id")
 				.should.equal false
 
 		it "should not destroy non-project containers", ->
 			@DockerRunner.destroyContainer
-				.calledWith("/totally-not-a-project-container", "some-random-id")
+				.calledWith("totally-not-a-project-container", "some-random-id")
 				.should.equal false
 
 		it "should callback the callback", ->
