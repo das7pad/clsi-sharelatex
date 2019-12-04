@@ -163,7 +163,14 @@ loadTcpServer = net.createServer (socket) ->
 		if err.code == "ECONNRESET"
 			# this always comes up, we don't know why
 			return
-		logger.err err:err, "error with socket on load check"
+		logger.err {
+			err,
+			bufferSize: socket.bufferSize,
+			bytesRead: socket.bytesRead,
+			bytesWritten: socket.bytesWritten,
+			remoteAddress: socket.remoteAddress,
+			remotePort: socket.remotePort,
+		}, "error with socket on load check"
 		socket.destroy()
 	
 	if STATE == "up" and Settings.internal.load_balancer_agent.report_load
