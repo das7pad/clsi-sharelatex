@@ -127,8 +127,9 @@ build_prod: clean_build_artifacts
 			app.js \
 			app/js \
 			config \
-		seccomp \
-		bin/synctex \
+			seccomp \
+			bin/synctex \
+			entrypoint.sh \
 		> build_artifacts.tar.gz
 
 	docker build \
