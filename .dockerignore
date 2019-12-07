@@ -43,7 +43,6 @@
 !/config/settings.defaults.coffee
 
 !/seccomp/clsi-profile.json
-!/synctex.profile
 # app config #
 ##############
 
@@ -62,3 +61,9 @@
 !/test/unit/coffee
 # app #
 #######
+
+###################
+# build artifacts #
+!/build_artifacts.tar.gz
+# build artifacts #
+###################
