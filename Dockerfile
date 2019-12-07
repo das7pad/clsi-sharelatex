@@ -24,17 +24,3 @@ RUN /docker_cleanup.sh npm ci
 COPY . /app
 
 RUN /docker_cleanup.sh make build_app
-
-FROM base as prod
-
-RUN /docker_cleanup.sh npm ci --only=prod
-
-ADD build_artifacts.tar.gz /app
-
-ARG RELEASE
-ARG COMMIT
-ENV \
-    SERVICE_NAME="clsi" \
-    RELEASE=${RELEASE} \
-    SENTRY_RELEASE=${RELEASE} \
-    COMMIT=${COMMIT}
