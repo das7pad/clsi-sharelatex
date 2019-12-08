@@ -130,6 +130,7 @@ build_prod: clean_build_artifacts
 			seccomp \
 			bin/synctex \
 			entrypoint.sh \
+			test/smoke/js \
 		> build_artifacts.tar.gz
 
 	docker build \
