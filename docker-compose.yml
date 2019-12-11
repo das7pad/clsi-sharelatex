@@ -30,11 +30,3 @@ services:
       SYNCTEX_BIN_HOST_PATH: $PWD/bin/synctex
       SHARELATEX_CONFIG: /app/config/settings.defaults.coffee
     command: npm run test:acceptance
-
-  tar:
-    build: .
-    image: ci/$PROJECT_NAME:$BRANCH_NAME-$BUILD_NUMBER
-    volumes:
-      - ./:/tmp/build/
-    command: tar -czf /tmp/build/build.tar.gz --exclude=build.tar.gz --exclude-vcs .
-    user: root
