@@ -159,6 +159,9 @@ STATE = "up"
 
 
 loadTcpServer = net.createServer (socket) ->
+	remoteAddress = socket.remoteAddress
+	remotePort = socket.remotePort
+
 	socket.on "error", (err)->
 		if err.code == "ECONNRESET"
 			# this always comes up, we don't know why
@@ -168,8 +171,8 @@ loadTcpServer = net.createServer (socket) ->
 			bufferSize: socket.bufferSize,
 			bytesRead: socket.bytesRead,
 			bytesWritten: socket.bytesWritten,
-			remoteAddress: socket.remoteAddress,
-			remotePort: socket.remotePort,
+			remoteAddress,
+			remotePort,
 		}, "error with socket on load check"
 		socket.destroy()
 	
