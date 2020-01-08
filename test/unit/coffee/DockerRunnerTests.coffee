@@ -107,7 +107,9 @@ describe "DockerRunner", ->
 				@DockerRunner._runAndWaitForContainer = (options, volumes, timeout, callback = (error, output)->) =>
 					if firstTime
 						firstTime = false
-						callback new Error("HTTP code is 500 which indicates error: server error")
+						callback new Error(
+							"(HTTP code 500) server error - OCI runtime create failed: [SNIP]"
+						)
 					else
 						callback(null, @output)
 				sinon.spy @DockerRunner, "_runAndWaitForContainer"

@@ -50,7 +50,7 @@ module.exports = DockerRunner =
 		# logOptions?.HostConfig?.SecurityOpt = "secomp used, removed in logging"
 		logger.log project_id: project_id, "running docker container"
 		DockerRunner._runAndWaitForContainer options, volumes, timeout, (error, output) ->
-			if error?.message?.match("HTTP code is 500")
+			if error?.message?.match("HTTP code 500")
 				logger.log err: error, project_id: project_id, "error running container so destroying and retrying"
 				DockerRunner.destroyContainer name, null, true, (error) ->
 					return callback(error) if error?
