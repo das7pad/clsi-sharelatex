@@ -6,6 +6,8 @@ if Settings.clsi?.dockerRunner == true
 else 
 	commandRunnerPath = "./LocalCommandRunner"
 logger.info commandRunnerPath:commandRunnerPath, "selecting command runner for clsi"
-CommandRunner = require(commandRunnerPath)
 
-module.exports = CommandRunner
+if commandRunnerPath == "./DockerRunner"
+	module.exports = require("./DockerRunner")
+else
+	module.exports = require("./LocalCommandRunner")
