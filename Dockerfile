@@ -2,7 +2,7 @@
 # Instead run bin/update_build_scripts from
 # https://github.com/das7pad/sharelatex-dev-env
 
-FROM node:12.15.0 AS base
+FROM node:12.16.1 AS base
 
 CMD ["node", "--expose-gc", "app.js"]
 
