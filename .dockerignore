@@ -40,7 +40,7 @@
 
 ##############
 # app config #
-!/config/settings.defaults.coffee
+!/config/settings.defaults.*
 
 !/seccomp/clsi-profile.json
 # app config #

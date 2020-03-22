@@ -2,10 +2,17 @@
 # Instead run bin/update_build_scripts from
 # https://github.com/das7pad/sharelatex-dev-env
 
+ifneq (,$(wildcard .git))
+git = git
+else
+# we are in docker, without the .git directory
+git = sh -c 'false'
+endif
+
 BUILD_NUMBER ?= local
-BRANCH_NAME ?= $(shell git rev-parse --abbrev-ref HEAD)
-COMMIT ?= $(shell git rev-parse HEAD)
-RELEASE ?= $(shell git describe --tags | sed 's/-g/+/;s/^v//')
+BRANCH_NAME ?= $(shell $(git) rev-parse --abbrev-ref HEAD || echo master)
+COMMIT ?= $(shell $(git) rev-parse HEAD || echo HEAD)
+RELEASE ?= $(shell $(git) describe --tags || echo v0.0.0 | sed 's/-g/+/;s/^v//')
 PROJECT_NAME = clsi
 BUILD_DIR_NAME = $(shell pwd | xargs basename | tr -cd '[a-zA-Z0-9_.\-]')
 DOCKER_COMPOSE_FLAGS ?= -f docker-compose.yml
@@ -22,9 +29,11 @@ clean_build:
 	docker rmi \
 		ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER) \
 		ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-base \
+		ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-dev-deps \
 		ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-dev \
 		ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-prod \
-		ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-cache \
+		ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-dev-deps-cache \
+		ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-prod-cache \
 		--force
 
 clean:
@@ -39,6 +48,8 @@ clean:
 
 test: lint
 lint:
+test: format
+format:
 
 UNIT_TEST_DOCKER_COMPOSE ?= \
 	COMPOSE_PROJECT_NAME=unit_test_$(BUILD_DIR_NAME) $(DOCKER_COMPOSE)
@@ -60,6 +71,16 @@ test_acceptance_run: test_acceptance_app_run
 test_acceptance_app: clean_test_acceptance_app
 test_acceptance_app: test_acceptance_app_run
 
+export TEXLIVE_IMAGE ?= quay.io/sharelatex/texlive-full:2017.1
+
+test_acceptance_app: pull_texlive
+pull_texlive:
+	docker pull $(TEXLIVE_IMAGE)
+
+ifeq (true,$(PULL_TEXLIVE_BEFORE_RUN))
+test_acceptance_app_run: pull_texlive
+endif
+
 test_acceptance_app_run:
 	$(ACCEPTANCE_TEST_DOCKER_COMPOSE) run --rm test_acceptance
 
@@ -72,6 +93,7 @@ clean_test_acceptance_app:
 	$(ACCEPTANCE_TEST_DOCKER_COMPOSE) down --volumes --timeout 0
 
 clean_test_acceptance: clean_clsi_artifacts
+clean_test_acceptance_app: clean_clsi_artifacts
 clean_clsi_artifacts:
 	$(ACCEPTANCE_TEST_DOCKER_COMPOSE) run --rm \
 		--entrypoint bash \
@@ -125,19 +147,32 @@ test/unit/js/%.js: test/unit/coffee/%.coffee
 
 build: clean_build_artifacts
 	docker build \
-		--cache-from ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-cache \
+		--cache-from ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-dev-deps-cache \
 		--tag ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-base \
 		--target base \
 		.
 
 	docker build \
 		--cache-from ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-base \
+		--cache-from ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-dev-deps-cache \
+		--tag ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-dev-deps \
+		--target dev-deps \
+		.
+
+	docker build \
+		--cache-from ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-dev-deps \
 		--tag ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER) \
 		--tag ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-dev \
 		--target dev \
 		.
 
 build_prod: clean_build_artifacts
+	docker build \
+		--cache-from ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-dev \
+		--tag ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-base \
+		--target base \
+		.
+
 	docker run \
 		--rm \
 		--entrypoint tar \
@@ -157,7 +192,8 @@ build_prod: clean_build_artifacts
 		--build-arg RELEASE=$(RELEASE) \
 		--build-arg COMMIT=$(COMMIT) \
 		--build-arg BASE=ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-base \
-		--cache-from ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-cache \
+		--cache-from ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-base \
+		--cache-from ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-prod-cache \
 		--tag ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-prod \
 		--file=Dockerfile.production \
 		.

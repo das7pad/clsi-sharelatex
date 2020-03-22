@@ -3,9 +3,7 @@
 // https://github.com/das7pad/sharelatex-dev-env
 
 pipeline {
-  agent {
-    label 'sharelatex && docker_socket_access'
-  }
+  agent none
   environment {
     DOCKER_COMPOSE_FLAGS = "-f docker-compose.ci.yml"
     IMAGE_CI = "ci/clsi:$BRANCH_NAME-$BUILD_NUMBER"
@@ -13,200 +11,269 @@ pipeline {
   }
 
   stages {
-    stage('Prepare environment') {
+    stage('Bootstrap') {
+      agent {
+        label 'sharelatex && docker_builder'
+      }
       stages {
-        stage('Pull Texlive') {
-          when {
-            expression {
-              env.SHARELATEX_DOCKER_REPOS != null
-            }
-          }
-          options {
-            timeout(time: 2, unit: 'HOURS')
-          }
-          environment {
-            TEXLIVE_IMAGE = "$SHARELATEX_DOCKER_REPOS/texlive:2017.1-full"
-          }
-          steps {
-            sh  '''
-                set -ex
-                docker pull $TEXLIVE_IMAGE \
-                || (
-                  docker build \
-                    -t $TEXLIVE_IMAGE \
-                    --build-arg TEXLIVE_SCHEME=full \
-                    https://github.com/das7pad/sharelatex-docker-images.git#:texlive \
-                  && \
-                  docker push $TEXLIVE_IMAGE
-                )
-                '''
-            sh 'docker tag $TEXLIVE_IMAGE quay.io/sharelatex/texlive-full:2017.1'
-          }
-        }
-        stage('Build Texlive') {
-          when {
-            expression {
-              env.SHARELATEX_DOCKER_REPOS == null
-            }
-          }
-          options {
-            timeout(time: 2, unit: 'HOURS')
-          }
-          steps {
-            sh  '''
-                docker build \
-                  -t quay.io/sharelatex/texlive-full:2017.1 \
-                  --build-arg TEXLIVE_SCHEME=full \
-                  https://github.com/das7pad/sharelatex-docker-images.git#:texlive
-                '''
-          }
-        }
-        stage('Pull node image') {
-            when {
+        stage('Prepare environment') {
+          stages {
+            stage('Pull node image') {
+              when {
                 expression {
-                    env.DOCKER_REGISTRY != null
+                  env.DOCKER_REGISTRY != null
                 }
-            }
-            steps {
+              }
+              steps {
                 sh 'docker pull $DOCKER_REGISTRY/$IMAGE_NODE'
                 sh 'docker tag $DOCKER_REGISTRY/$IMAGE_NODE $IMAGE_NODE'
+              }
             }
-        }
-        stage('Pull Cache') {
-          when {
-            expression {
-              env.SHARELATEX_DOCKER_REPOS != null
+            stage('Cleanup and Create Output Directory For Test Results') {
+              steps {
+                sh 'mkdir --parents --mode=777 output'
+                sh '''
+                  docker run --rm \
+                    --volume $PWD/output:/home/node \
+                    --user node \
+                    $IMAGE_NODE \
+                    sh -c 'find /home/node -mindepth 1 | xargs rm -rfv'
+                '''
+              }
+            }
+            stage('Clean Previous artifacts') {
+              steps {
+                sh 'git clean -xdf'
+                sh 'mkdir --parents --mode=777 output'
+              }
+            }
+            stage('Pull Cache') {
+              environment {
+                IMAGE_BRANCH = "$SHARELATEX_DOCKER_REPOS/clsi:$BRANCH_NAME"
+                IMAGE_BRANCH_DEV = "$SHARELATEX_DOCKER_REPOS/clsi:dev"
+                IMAGE_CACHE_HOT_DEV_DEPS = "$IMAGE_BRANCH-dev-deps"
+                IMAGE_CACHE_COLD = "$IMAGE_BRANCH_DEV-dev-deps"
+                IMAGE_CACHE_CI_DEV_DEPS = "$IMAGE_CI-dev-deps-cache"
+              }
+              steps {
+                sh '''
+                  docker pull $IMAGE_CACHE_HOT_DEV_DEPS \
+                  && docker tag \
+                        $IMAGE_CACHE_HOT_DEV_DEPS \
+                        $IMAGE_CACHE_CI_DEV_DEPS \
+                  || (docker pull $IMAGE_CACHE_COLD \
+                  && docker tag \
+                        $IMAGE_CACHE_COLD \
+                        $IMAGE_CACHE_CI_DEV_DEPS) \
+                  || echo 'build cache not available'
+                '''
+              }
+              post {
+                cleanup {
+                  sh '''
+                    docker rmi --force \
+                      $IMAGE_CACHE_HOT_DEV_DEPS \
+                      $IMAGE_CACHE_COLD \
+                  '''
+                }
+              }
             }
           }
-          environment {
-            IMAGE_BRANCH = "$SHARELATEX_DOCKER_REPOS/clsi:$BRANCH_NAME"
-            IMAGE_BRANCH_DEV = "$SHARELATEX_DOCKER_REPOS/clsi:dev"
-          }
-          steps {
-            sh '''
-              docker pull $IMAGE_BRANCH \
-              && docker tag $IMAGE_BRANCH $IMAGE_CI-cache \
-              || (docker pull $IMAGE_BRANCH_DEV \
-              && docker tag $IMAGE_BRANCH_DEV $IMAGE_CI-cache) \
-              || echo 'no app layer build cache available'
-            '''
-          }
-          post {
-            cleanup {
-              sh '''
-                docker rmi --force \
-                  $IMAGE_BRANCH \
-                  $IMAGE_BRANCH_DEV \
-              '''
-            }
-          }
         }
-        stage('Cleanup and Create Output Directory For Test Results') {
-          steps {
-            sh 'mkdir --parents --mode=777 output'
-            sh '''
-              docker run --rm \
-                --volume $PWD/output:/home/node \
-                --user node \
-                $IMAGE_NODE \
-                sh -c 'find /home/node -mindepth 1 | xargs rm -rfv'
-            '''
-          }
-        }
-        stage('Clean Previous artifacts') {
-          steps {
-            sh 'git clean -xdf'
-            sh 'mkdir --parents --mode=777 output'
-          }
-        }
-      }
-    }
-    stage('CI') {
-      options {
-        timeout(time: 30, unit: 'MINUTES')
-      }
-      stages {
+
         stage('Build') {
           steps {
             sh 'make build'
           }
         }
 
-        stage('Unit Tests') {
-          steps {
-            sh 'make test_unit'
-          }
-          post {
-            always {
-              xunit (tools: [JUnit(pattern: 'output/unit.xml')])
+        stage('Post Build') {
+          parallel {
+            stage('Push dev-deps') {
+              environment {
+                IMAGE_BRANCH = "$SHARELATEX_DOCKER_REPOS/clsi:$BRANCH_NAME"
+                IMAGE_CACHE_HOT_DEV_DEPS = "$IMAGE_BRANCH-dev-deps"
+              }
+              steps {
+                sh '''
+                  docker tag $IMAGE_CI-dev-deps $IMAGE_CACHE_HOT_DEV_DEPS
+                '''
+                sh 'docker push $IMAGE_CACHE_HOT_DEV_DEPS'
+              }
+              post {
+                cleanup {
+                  sh 'docker rmi --force $IMAGE_CACHE_HOT_DEV_DEPS'
+                }
+              }
+            }
+
+            stage('Lint') {
+              steps {
+                sh 'make lint'
+              }
+            }
+
+            stage('Formatting') {
+              steps {
+                sh 'make format'
+              }
             }
           }
         }
 
-        stage('Acceptance Tests') {
+        stage('Push dev') {
+          environment {
+            IMAGE = "$SHARELATEX_DOCKER_REPOS/clsi:$BRANCH_NAME-$BUILD_NUMBER"
+          }
           steps {
-            sh 'make test_acceptance'
+            sh 'docker tag $IMAGE_CI-dev $IMAGE-dev'
+            sh 'docker push $IMAGE-dev'
           }
           post {
-            always {
-              xunit (tools: [JUnit(pattern: 'output/acceptance.xml')])
-            }
             cleanup {
-              sh 'make clean_test_acceptance'
+              sh 'docker rmi --force $IMAGE-dev'
             }
           }
+        }
+      }
+      post {
+        cleanup {
+          sh 'make clean_ci'
         }
       }
     }
 
-    stage('Submit results') {
-      options {
-        timeout(time: 30, unit: 'MINUTES')
-      }
-      stages {
-        stage('Build production') {
-          when {
-            expression {
-              env.SHARELATEX_DOCKER_REPOS != null
-            }
+    stage('Fan out') {
+      parallel {
+        stage('Unit Tests') {
+          agent {
+            label 'sharelatex'
+          }
+          environment {
+            SUFFIX = 'test-unit'
+            IMAGE = "$SHARELATEX_DOCKER_REPOS/clsi:$BRANCH_NAME-$BUILD_NUMBER"
           }
           steps {
-            sh 'make build_prod'
+            sh 'docker pull $IMAGE-dev'
+            sh 'docker tag $IMAGE-dev $IMAGE_CI-$SUFFIX'
+            sh 'mkdir --parents --mode=777 output'
+            sh 'BUILD_NUMBER="$BUILD_NUMBER-$SUFFIX" make test_unit'
+          }
+          post {
+            always {
+              xunit(tools: [JUnit(pattern: 'output/unit.xml')])
+            }
+            cleanup {
+              sh 'docker rmi --force $IMAGE-dev $IMAGE_CI-$SUFFIX'
+            }
           }
         }
-        stage('docker push') {
-          when {
-            expression {
-              env.SHARELATEX_DOCKER_REPOS != null
+
+        stage('App Acceptance Tests') {
+          agent {
+            label 'sharelatex && docker_socket_access'
+          }
+          environment {
+            // https://github.com/das7pad/sharelatex-docker-images.git
+            TEXLIVE_IMAGE = "$SHARELATEX_DOCKER_REPOS/texlive:2017.1-full"
+            PULL_TEXLIVE_BEFORE_RUN = "true"
+            SUFFIX = 'test-acceptance'
+            IMAGE = "$SHARELATEX_DOCKER_REPOS/clsi:$BRANCH_NAME-$BUILD_NUMBER"
+          }
+          steps {
+            sh 'docker pull $IMAGE-dev'
+            sh 'docker tag $IMAGE-dev $IMAGE_CI-$SUFFIX'
+            sh 'mkdir --parents --mode=777 output'
+            sh 'BUILD_NUMBER="$BUILD_NUMBER-$SUFFIX" make test_acceptance_app'
+          }
+          post {
+            always {
+              xunit(tools: [JUnit(pattern: 'output/acceptance.xml')])
             }
+            cleanup {
+              sh 'make clean_test_acceptance_app'
+              sh 'docker rmi --force $IMAGE-dev $IMAGE_CI-$SUFFIX'
+            }
+          }
+        }
+
+        stage('Production build') {
+          agent {
+            label 'sharelatex && docker_builder'
           }
           environment {
             IMAGE = "$SHARELATEX_DOCKER_REPOS/clsi:$BRANCH_NAME-$BUILD_NUMBER"
-            IMAGE_BRANCH = "$SHARELATEX_DOCKER_REPOS/clsi:$BRANCH_NAME"
           }
-          steps {
-            sh 'docker tag $IMAGE_CI-prod $IMAGE'
-            sh 'docker push $IMAGE'
-            sh 'docker tag $IMAGE $IMAGE_BRANCH'
-            sh 'docker push $IMAGE_BRANCH'
+          stages {
+
+            stage('Submit results') {
+              options {
+                timeout(time: 30, unit: 'MINUTES')
+              }
+              environment {
+                IMAGE_BRANCH = "$SHARELATEX_DOCKER_REPOS/clsi:$BRANCH_NAME"
+                IMAGE_BRANCH_DEV = "$SHARELATEX_DOCKER_REPOS/clsi:dev"
+              }
+              stages {
+                stage('Pull production cache') {
+                  steps {
+                    sh '''
+                      docker pull $IMAGE_BRANCH \
+                      && docker tag $IMAGE_BRANCH $IMAGE_CI-prod-cache \
+                      || (docker pull $IMAGE_BRANCH_DEV \
+                      && docker tag $IMAGE_BRANCH_DEV $IMAGE_CI-prod-cache) \
+                      || echo 'no prod layer build cache available'
+                    '''
+                  }
+                  post {
+                    cleanup {
+                      sh '''
+                        docker rmi --force \
+                          $IMAGE_BRANCH \
+                          $IMAGE_BRANCH_DEV \
+                      '''
+                    }
+                  }
+                }
+                stage('Build production') {
+                  steps {
+                    sh 'docker pull $IMAGE-dev'
+                    sh 'docker tag $IMAGE-dev $IMAGE_CI-dev'
+                    sh 'make build_prod'
+                  }
+                  post {
+                    cleanup {
+                      sh 'docker rmi --force $IMAGE-dev $IMAGE_CI-dev'
+                    }
+                  }
+                }
+                stage('docker push') {
+                  steps {
+                    sh 'docker tag $IMAGE_CI-prod $IMAGE'
+                    sh 'docker push $IMAGE'
+                    sh 'docker tag $IMAGE $IMAGE_BRANCH'
+                    sh 'docker push $IMAGE_BRANCH'
+                  }
+                  post {
+                    cleanup {
+                      sh '''
+                        docker rmi --force \
+                          $IMAGE \
+                          $IMAGE_BRANCH \
+                      '''
+                    }
+                  }
+                }
+              }
+            }
           }
           post {
             cleanup {
-              sh '''
-                docker rmi --force \
-                  $IMAGE \
-                  $IMAGE_BRANCH \
-              '''
+              sh 'make clean_ci'
             }
           }
         }
       }
-    }
-  }
-
-  post {
-    cleanup {
-      sh 'make clean_ci'
     }
   }
 }
