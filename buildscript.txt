@@ -5,4 +5,5 @@ clsi
 --dependencies=
 --docker-repos=gcr.io/overleaf-ops
 --build-target=docker
+--data-dirs=cache,compiles,db
 --env-pass-through=TEXLIVE_IMAGE

@@ -8,7 +8,7 @@ module.exports =
 			database: "clsi"
 			username: "clsi"
 			dialect: "sqlite"
-			storage: process.env["SQLITE_PATH"] or Path.resolve(__dirname + "/../db.sqlite")
+			storage: process.env["SQLITE_PATH"] or Path.resolve(__dirname + "/../db/db.sqlite")
 			pool:
 				max: 1
 				min: 1

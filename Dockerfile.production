@@ -9,6 +9,12 @@ RUN /docker_cleanup.sh npm ci --only=prod
 
 ADD build_artifacts.tar.gz /app
 
+RUN DATA_DIRS="cache compiles db" \
+&&  mkdir -p ${DATA_DIRS} \
+&&  chown node:node ${DATA_DIRS}
+
+VOLUME /app/cache /app/compiles /app/db
+
 ARG RELEASE
 ARG COMMIT
 ENV \

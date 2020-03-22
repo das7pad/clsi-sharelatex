@@ -26,3 +26,7 @@ FROM dev-deps as dev
 COPY . /app
 
 RUN /docker_cleanup.sh make build_app
+
+RUN DATA_DIRS="cache compiles db" \
+&&  mkdir -p ${DATA_DIRS} \
+&&  chown node:node ${DATA_DIRS}
