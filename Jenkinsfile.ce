@@ -176,11 +176,7 @@ pipeline {
             IMAGE = "$SHARELATEX_DOCKER_REPOS/clsi:$BRANCH_NAME-$BUILD_NUMBER"
           }
           stages {
-
-            stage('Submit results') {
-              options {
-                timeout(time: 30, unit: 'MINUTES')
-              }
+            stage('Production build') {
               environment {
                 IMAGE_BRANCH = "$SHARELATEX_DOCKER_REPOS/clsi:$BRANCH_NAME"
                 IMAGE_BRANCH_DEV = "$SHARELATEX_DOCKER_REPOS/clsi:dev"
