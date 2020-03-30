@@ -22,6 +22,12 @@ DOCKER_COMPOSE := BUILD_NUMBER=$(BUILD_NUMBER) \
 	MOCHA_GREP=${MOCHA_GREP} \
 	docker-compose ${DOCKER_COMPOSE_FLAGS}
 
+ifneq (,$(DOCKER_REGISTRY))
+IMAGE_NODE ?= $(DOCKER_REGISTRY)/node:12.16.1
+else
+IMAGE_NODE ?= node:12.16.1
+endif
+
 clean_ci: clean
 clean_ci: clean_build
 
@@ -201,5 +207,17 @@ build_prod: clean_build_artifacts
 clean_ci: clean_build_artifacts
 clean_build_artifacts:
 	rm -f build_artifacts.tar.gz
+
+clean_ci: clean_output
+clean_output:
+ifneq (,$(wildcard output/*))
+	docker run --rm \
+		--volume $(PWD)/output:/home/node \
+		--user node \
+		--network none \
+		$(IMAGE_NODE) \
+		sh -c 'find /home/node -mindepth 1 | xargs rm -rfv'
+	rm -rfv output
+endif
 
 .PHONY: clean test test_unit test_acceptance test_clean build
