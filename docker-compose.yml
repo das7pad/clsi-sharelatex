@@ -27,6 +27,4 @@ services:
       TEXLIVE_IMAGE_USER: "tex"
       DOCKER_RUNNER: "true"
       COMPILES_HOST_DIR: $PWD/compiles
-      SYNCTEX_BIN_HOST_PATH: $PWD/bin/synctex
-      SHARELATEX_CONFIG: /app/config/settings.defaults.coffee
     command: npm run test:acceptance
