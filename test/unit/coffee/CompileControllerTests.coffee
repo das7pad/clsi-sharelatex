@@ -9,6 +9,9 @@ describe "CompileController", ->
 		@CompileController = SandboxedModule.require modulePath, requires:
 			"./CompileManager": @CompileManager = {}
 			"./RequestParser": @RequestParser = {}
+			"./Metrics":
+				Timer: class Timer
+					done: () ->
 			"settings-sharelatex": @Settings =
 				apis:
 					clsi:

@@ -13,6 +13,12 @@ describe "CompileManager", ->
 			"./ResourceWriter": @ResourceWriter = {}
 			"./OutputFileFinder": @OutputFileFinder = {}
 			"./OutputCacheManager": @OutputCacheManager = {}
+			"./Metrics":
+				gauge: sinon.stub()
+				inc: sinon.stub()
+				timing: sinon.stub()
+				Timer: class Timer
+					done: () ->
 			"settings-sharelatex": @Settings =
 				path:
 					compilesDir: "/compiles/dir"
