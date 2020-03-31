@@ -9,23 +9,23 @@ logger = require("logger-sharelatex")
 Path = require("path")
 fixturePath = (path) -> Path.normalize(__dirname + "/../fixtures/" + path)
 process = require "process"
-console.log process.pid, process.ppid, process.getuid(),process.getgroups(), "PID"
-try
-	console.log "creating tmp directory", fixturePath("tmp")
-	fs.mkdirSync(fixturePath("tmp"))
-catch err
-	console.log err, fixturePath("tmp"), "unable to create fixture tmp path"
+logger.log process.pid, process.ppid, process.getuid(),process.getgroups(), "PID"
+
+if not fs.existsSync(fixturePath("tmp"))
+	try
+		logger.log "creating tmp directory", fixturePath("tmp")
+		fs.mkdirSync(fixturePath("tmp"))
+	catch err
+		logger.fatal {err, path: fixturePath("tmp")}, "unable to create fixture tmp path"
 
 MOCHA_LATEX_TIMEOUT = 60 * 1000
 
 convertToPng = (pdfPath, pngPath, callback = (error) ->) ->
 	command = "convert #{fixturePath(pdfPath)} #{fixturePath(pngPath)}"
-	console.log "COMMAND"
-	console.log command
+	logger.log {command}, "COMMAND"
 	convert = ChildProcess.exec command
-	stdout = ""
-	convert.stdout.on "data", (chunk) -> console.log "STDOUT", chunk.toString()
-	convert.stderr.on "data", (chunk) -> console.log "STDERR", chunk.toString()
+	convert.stdout.on "data", (chunk) -> logger.log({command, chunk: chunk.toString()}, "convert STDOUT")
+	convert.stderr.on "data", (chunk) -> logger.log({command, chunk: chunk.toString()}, "convert STDERR")
 	convert.on "exit", () ->
 		callback()
 
@@ -42,14 +42,14 @@ compare = (originalPath, generatedPath, callback = (error, same) ->) ->
 					throw err
 			callback null, true
 		else
-			console.log "compare result", stderr
+			logger.log {stderr}, "compare result"
 			callback null, false
 
 checkPdfInfo = (pdfPath, callback = (error, output) ->) ->
 	proc = ChildProcess.exec "pdfinfo #{fixturePath(pdfPath)}"
 	stdout = ""
 	proc.stdout.on "data", (chunk) -> stdout += chunk
-	proc.stderr.on "data", (chunk) -> console.log "STDERR", chunk.toString()
+	proc.stderr.on "data", (chunk) -> logger.log {pdfPath, chunk: chunk.toString()}, "pdfinfo STDERR"
 	proc.on "exit", () ->
 		if stdout.match(/Optimized:\s+yes/)
 			callback null, true
@@ -70,8 +70,7 @@ compareMultiplePages = (project_id, callback = (error) ->) ->
 	compareNext 0, callback
 
 comparePdf = (project_id, example_dir, callback = (error) ->) ->
-	console.log "CONVERT"
-	console.log "tmp/#{project_id}.pdf", "tmp/#{project_id}-generated.png"
+	logger.log {project_id, example_dir}, "CONVERT"
 	convertToPng "tmp/#{project_id}.pdf", "tmp/#{project_id}-generated.png", (error) =>
 		throw error if error?
 		convertToPng "examples/#{example_dir}/output.pdf", "tmp/#{project_id}-source.png", (error) =>
@@ -90,7 +89,7 @@ comparePdf = (project_id, example_dir, callback = (error) ->) ->
 downloadAndComparePdf = (project_id, example_dir, url, callback = (error) ->) ->
 	writeStream = fs.createWriteStream(fixturePath("tmp/#{project_id}.pdf"))
 	request.get(url).pipe(writeStream)
-	console.log("writing file out", fixturePath("tmp/#{project_id}.pdf"))
+	logger.log {project_id}, "writing file out"
 	writeStream.on "close", () =>
 		checkPdfInfo "tmp/#{project_id}.pdf", (error, optimised) =>
 			throw error if error?
@@ -133,7 +132,7 @@ describe "Example Documents", ->
 					this.timeout(MOCHA_LATEX_TIMEOUT)
 					Client.compileDirectory @project_id, fixturePath("examples"), example_dir, 4242, (error, res, body) =>
 						if error || body?.compile?.status is "failure"
-							console.log "DEBUG: error", error, "body", JSON.stringify(body)
+							logger.fatal {error, example_dir, body: JSON.stringify(body) }, "compile error"
 							chai.assert false, "Compile failed"
 						pdf = Client.getOutputFile body, "pdf"
 						downloadAndComparePdf(@project_id, example_dir, pdf.url, done)
@@ -142,7 +141,7 @@ describe "Example Documents", ->
 					this.timeout(MOCHA_LATEX_TIMEOUT)
 					Client.compileDirectory @project_id, fixturePath("examples"), example_dir, 4242, (error, res, body) =>
 						if error || body?.compile?.status is "failure"
-							console.log "DEBUG: error", error, "body", JSON.stringify(body)
+							logger.fatal {error, example_dir, body: JSON.stringify(body) }, "compile error"
 							chai.assert false, "Compile failed"
 						pdf = Client.getOutputFile body, "pdf"
 						downloadAndComparePdf(@project_id, example_dir, pdf.url, done)
