@@ -12,5 +12,4 @@ chown node:node /app/db
 mkdir -p /app/test/acceptance/fixtures/tmp/
 chown node:node /app/test/acceptance/fixtures/tmp/
 
-./bin/install_texlive_gce.sh
 exec runuser -u node -- "$@"
