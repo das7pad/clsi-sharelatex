@@ -5,13 +5,6 @@ CompileController = require "./app/js/CompileController"
 Settings = require "settings-sharelatex"
 logger = require "logger-sharelatex"
 logger.initialize("clsi")
-if Settings.sentry?.dsn?
-	logger.initializeErrorReporting(Settings.sentry.dsn, Settings.sentry.options)
-
-if Settings.catchErrors
-	process.removeAllListeners "uncaughtException"
-	process.on "uncaughtException", (error) ->
-		logger.error err: error, "uncaughtException"
 
 smokeTest = require "./test/smoke/js/SmokeTests"
 ContentTypeMapper = require "./app/js/ContentTypeMapper"
