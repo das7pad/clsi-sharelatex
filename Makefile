@@ -228,8 +228,6 @@ ifneq (,$(wildcard output/*))
 	rm -rfv output
 endif
 
-export R_TARGET ?= $(TARGET)
-
 pull_node:
 	docker pull $(IMAGE_NODE)
 	docker tag $(IMAGE_NODE) node:12.16.1
