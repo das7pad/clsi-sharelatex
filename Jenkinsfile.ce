@@ -84,7 +84,7 @@ pipeline {
             label 'sharelatex'
           }
           environment {
-            SUFFIX = 'test-unit'
+            SUFFIX = '-test-unit'
           }
           steps {
             sh 'make prepare_ci_stage'
