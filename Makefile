@@ -22,24 +22,33 @@ DOCKER_COMPOSE := BUILD_NUMBER=$(BUILD_NUMBER) \
 	MOCHA_GREP=${MOCHA_GREP} \
 	docker-compose ${DOCKER_COMPOSE_FLAGS}
 
-ifneq (,$(DOCKER_REGISTRY))
-IMAGE_NODE ?= $(DOCKER_REGISTRY)/node:12.16.1
-else
-IMAGE_NODE ?= node:12.16.1
-endif
+export DOCKER_REGISTRY ?= localhost:5000
+export SHARELATEX_DOCKER_REPOS ?= $(DOCKER_REGISTRY)/sharelatex
+
+export IMAGE_NODE ?= $(DOCKER_REGISTRY)/node:12.16.1
+export IMAGE_PROJECT ?= $(SHARELATEX_DOCKER_REPOS)/$(PROJECT_NAME)
+export IMAGE_BRANCH ?= $(IMAGE_PROJECT):$(BRANCH_NAME)
+export IMAGE ?= $(IMAGE_BRANCH)-$(BUILD_NUMBER)
+
+export IMAGE_BRANCH_DEV ?= $(IMAGE_PROJECT):dev
+export IMAGE_CACHE_COLD ?= $(IMAGE_BRANCH_DEV)
+export IMAGE_CACHE_HOT ?= $(IMAGE_BRANCH)
+
+SUFFIX =
+export IMAGE_CI ?= ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)$(SUFFIX)
 
 clean_ci: clean
 clean_ci: clean_build
 
-clean_build:
+clean_build: clean_docker_images
+clean_docker_images:
 	docker rmi \
-		ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER) \
-		ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-base \
-		ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-dev-deps \
-		ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-dev \
-		ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-prod \
-		ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-dev-deps-cache \
-		ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-prod-cache \
+		$(IMAGE_CI)-base \
+		$(IMAGE_CI)-dev-deps \
+		$(IMAGE_CI)-dev \
+		$(IMAGE_CI)-prod \
+		$(IMAGE_CI)-dev-deps-cache \
+		$(IMAGE_CI)-prod-cache \
 		--force
 
 clean:
@@ -150,38 +159,38 @@ test/unit/js/%.js: test/unit/coffee/%.coffee
 	@mkdir -p $(@D)
 	$(COFFEE) --compile -o $(@D) $<
 
-build: clean_build_artifacts
+build_dev_deps: clean_build_artifacts
 	docker build \
-		--cache-from ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-dev-deps-cache \
-		--tag ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-base \
+		--cache-from $(IMAGE_CI)-dev-deps-cache \
+		--tag $(IMAGE_CI)-base \
 		--target base \
 		.
 
 	docker build \
-		--cache-from ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-base \
-		--cache-from ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-dev-deps-cache \
-		--tag ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-dev-deps \
+		--cache-from $(IMAGE_CI)-base \
+		--cache-from $(IMAGE_CI)-dev-deps-cache \
+		--tag $(IMAGE_CI)-dev-deps \
 		--target dev-deps \
 		.
 
+build_dev: clean_build_artifacts
 	docker build \
-		--cache-from ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-dev-deps \
-		--tag ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER) \
-		--tag ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-dev \
+		--cache-from $(IMAGE_CI)-dev-deps \
+		--tag $(IMAGE_CI)-dev \
 		--target dev \
 		.
 
 build_prod: clean_build_artifacts
 	docker build \
-		--cache-from ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-dev \
-		--tag ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-base \
+		--cache-from $(IMAGE_CI)-dev \
+		--tag $(IMAGE_CI)-base \
 		--target base \
 		.
 
 	docker run \
 		--rm \
 		--entrypoint tar \
-		ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-dev \
+		$(IMAGE_CI)-dev \
 			--create \
 			--gzip \
 			app.js \
@@ -196,14 +205,14 @@ build_prod: clean_build_artifacts
 	docker build \
 		--build-arg RELEASE=$(RELEASE) \
 		--build-arg COMMIT=$(COMMIT) \
-		--build-arg BASE=ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-base \
-		--cache-from ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-base \
-		--cache-from ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-prod-cache \
-		--tag ci/$(PROJECT_NAME):$(BRANCH_NAME)-$(BUILD_NUMBER)-prod \
+		--build-arg BASE=$(IMAGE_CI)-base \
+		--cache-from $(IMAGE_CI)-base \
+		--cache-from $(IMAGE_CI)-prod-cache \
+		--tag $(IMAGE_CI)-prod \
 		--file=Dockerfile.production \
 		.
 
-clean_ci: clean_build_artifacts
+clean_build: clean_build_artifacts
 clean_build_artifacts:
 	rm -f build_artifacts.tar.gz
 
@@ -218,5 +227,71 @@ ifneq (,$(wildcard output/*))
 		sh -c 'find /home/node -mindepth 1 | xargs rm -rfv'
 	rm -rfv output
 endif
+
+export R_TARGET ?= $(TARGET)
+
+pull_node:
+	docker pull $(IMAGE_NODE)
+	docker tag $(IMAGE_NODE) node:12.16.1
+
+pull_cache_cold:
+	docker pull $(IMAGE_CACHE_COLD)$(R_TARGET)
+	docker tag $(IMAGE_CACHE_COLD)$(R_TARGET) $(IMAGE_CI)$(TARGET)-cache
+
+pull_cache_hot:
+	docker pull $(IMAGE_CACHE_HOT)$(R_TARGET)
+	docker tag $(IMAGE_CACHE_HOT)$(R_TARGET) $(IMAGE_CI)$(TARGET)-cache
+
+pull_cache:
+	make pull_cache_hot || make pull_cache_cold || echo 'cache miss'
+
+clean_pull_cache:
+	docker rmi --force \
+		$(IMAGE_CACHE_COLD)$(R_TARGET) \
+		$(IMAGE_CACHE_HOT)$(R_TARGET) \
+
+push_cache_hot:
+	docker tag $(IMAGE_CI)$(TARGET) $(IMAGE_CACHE_HOT)$(R_TARGET)
+	docker push $(IMAGE_CACHE_HOT)$(R_TARGET)
+
+push_target:
+	docker tag $(IMAGE_CI)$(TARGET) $(IMAGE)$(R_TARGET)
+	docker push $(IMAGE)$(R_TARGET)
+
+clean_push:
+	docker rmi --force \
+		$(IMAGE)$(R_TARGET) \
+		$(IMAGE_CACHE_HOT)$(R_TARGET) \
+
+prepare_ci_stage: build_dev_with_cache
+build_dev_with_cache:
+	docker pull $(IMAGE)-dev-deps
+	docker tag $(IMAGE)-dev-deps $(IMAGE_CI)-dev-deps
+	$(MAKE) --no-print-directory build_dev
+
+prepare_ci_stage: create_output
+create_output:
+	mkdir --parents --mode=777 output
+
+clean_ci_stage: clean_output
+clean_ci_stage: clean_stage_images
+clean_stage_images:
+	docker rmi --force \
+		$(IMAGE)-dev-deps \
+		$(IMAGE_CI)-dev-deps \
+		$(IMAGE_CI)-dev \
+
+compress_public: public.tar.xz
+.PHONY: public.tar.xz
+public.tar.xz:
+	docker run \
+		--rm \
+		--volume $(PWD)/compress.sh:/compress.sh \
+		--workdir /app/public \
+		--entrypoint sh \
+		$(IMAGE_CI)-webpack \
+		-c '/compress.sh && tar --create .' \
+	| xz -9e \
+	> public.tar.xz
 
 .PHONY: clean test test_unit test_acceptance test_clean build

@@ -6,8 +6,6 @@ pipeline {
   agent none
   environment {
     DOCKER_COMPOSE_FLAGS = "-f docker-compose.ci.yml"
-    IMAGE_CI = "ci/clsi:$BRANCH_NAME-$BUILD_NUMBER"
-    IMAGE_NODE = 'node:12.16.1'
   }
 
   stages {
@@ -22,8 +20,7 @@ pipeline {
               stages {
                 stage('Pull node image') {
                   steps {
-                    sh 'docker pull $DOCKER_REGISTRY/$IMAGE_NODE'
-                    sh 'docker tag $DOCKER_REGISTRY/$IMAGE_NODE $IMAGE_NODE'
+                    sh 'make pull_node'
                   }
                 }
                 stage('Clean Previous artifacts') {
@@ -34,78 +31,44 @@ pipeline {
                 }
                 stage('Pull Cache') {
                   environment {
-                    IMAGE_BRANCH = "$SHARELATEX_DOCKER_REPOS/clsi:$BRANCH_NAME"
-                    IMAGE_BRANCH_DEV = "$SHARELATEX_DOCKER_REPOS/clsi:dev"
-                    IMAGE_CACHE_HOT_DEV_DEPS = "$IMAGE_BRANCH-dev-deps"
-                    IMAGE_CACHE_COLD = "$IMAGE_BRANCH_DEV-dev-deps"
-                    IMAGE_CACHE_CI_DEV_DEPS = "$IMAGE_CI-dev-deps-cache"
+                    TARGET = '-dev-deps'
                   }
                   steps {
-                    sh '''
-                      docker pull $IMAGE_CACHE_HOT_DEV_DEPS \
-                      && docker tag \
-                            $IMAGE_CACHE_HOT_DEV_DEPS \
-                            $IMAGE_CACHE_CI_DEV_DEPS \
-                      || (docker pull $IMAGE_CACHE_COLD \
-                      && docker tag \
-                            $IMAGE_CACHE_COLD \
-                            $IMAGE_CACHE_CI_DEV_DEPS) \
-                      || echo 'build cache not available'
-                    '''
+                    sh 'make pull_cache'
                   }
                   post {
                     cleanup {
-                      sh '''
-                        docker rmi --force \
-                          $IMAGE_CACHE_HOT_DEV_DEPS \
-                          $IMAGE_CACHE_COLD \
-                      '''
+                      sh 'make clean_pull_cache'
                     }
                   }
                 }
               }
             }
 
-            stage('Build') {
+            stage('Build dev-deps') {
               steps {
-                sh 'make build'
+                sh 'make build_dev_deps'
               }
             }
 
             stage('Push dev-deps') {
               environment {
-                IMAGE_BRANCH = "$SHARELATEX_DOCKER_REPOS/clsi:$BRANCH_NAME"
-                IMAGE_CACHE_HOT_DEV_DEPS = "$IMAGE_BRANCH-dev-deps"
+                TARGET = '-dev-deps'
               }
               steps {
-                sh 'docker tag $IMAGE_CI-dev-deps $IMAGE_CACHE_HOT_DEV_DEPS'
-                sh 'docker push $IMAGE_CACHE_HOT_DEV_DEPS'
+                sh 'make push_cache_hot'
+                sh 'make push_target'
               }
               post {
                 cleanup {
-                  sh 'docker rmi --force $IMAGE_CACHE_HOT_DEV_DEPS'
-                }
-              }
-            }
-
-            stage('Push dev') {
-              environment {
-                IMAGE = "$SHARELATEX_DOCKER_REPOS/clsi:$BRANCH_NAME-$BUILD_NUMBER"
-              }
-              steps {
-                sh 'docker tag $IMAGE_CI-dev $IMAGE-dev'
-                sh 'docker push $IMAGE-dev'
-              }
-              post {
-                cleanup {
-                  sh 'docker rmi --force $IMAGE-dev'
+                  sh 'make clean_push'
                 }
               }
             }
           }
           post {
             cleanup {
-              sh 'make clean_ci'
+              sh 'make clean_docker_images'
             }
           }
         }
@@ -120,21 +83,17 @@ pipeline {
           }
           environment {
             SUFFIX = 'test-unit'
-            IMAGE = "$SHARELATEX_DOCKER_REPOS/clsi:$BRANCH_NAME-$BUILD_NUMBER"
           }
           steps {
-            sh 'docker pull $IMAGE-dev'
-            sh 'docker tag $IMAGE-dev $IMAGE_CI-$SUFFIX'
-            sh 'mkdir --parents --mode=777 output'
-            sh 'BUILD_NUMBER="$BUILD_NUMBER-$SUFFIX" make test_unit'
+            sh 'make prepare_ci_stage'
+            sh 'make test_unit'
           }
           post {
             always {
               xunit(tools: [JUnit(pattern: 'output/unit.xml')])
             }
             cleanup {
-              sh 'make clean_output'
-              sh 'docker rmi --force $IMAGE-dev $IMAGE_CI-$SUFFIX'
+              sh 'make clean_ci_stage'
             }
           }
         }
@@ -148,22 +107,18 @@ pipeline {
             TEXLIVE_IMAGE = "$SHARELATEX_DOCKER_REPOS/texlive:2017.1-full"
             PULL_TEXLIVE_BEFORE_RUN = "true"
             SUFFIX = 'test-acceptance'
-            IMAGE = "$SHARELATEX_DOCKER_REPOS/clsi:$BRANCH_NAME-$BUILD_NUMBER"
           }
           steps {
-            sh 'docker pull $IMAGE-dev'
-            sh 'docker tag $IMAGE-dev $IMAGE_CI-$SUFFIX'
-            sh 'mkdir --parents --mode=777 output'
-            sh 'BUILD_NUMBER="$BUILD_NUMBER-$SUFFIX" make test_acceptance_app'
+            sh 'make prepare_ci_stage'
+            sh 'make test_acceptance_app'
           }
           post {
             always {
               xunit(tools: [JUnit(pattern: 'output/acceptance.xml')])
             }
             cleanup {
-              sh 'make clean_output'
               sh 'make clean_test_acceptance_app'
-              sh 'docker rmi --force $IMAGE-dev $IMAGE_CI-$SUFFIX'
+              sh 'make clean_ci_stage'
             }
           }
         }
@@ -172,62 +127,42 @@ pipeline {
           agent {
             label 'sharelatex && docker_builder'
           }
-          environment {
-            IMAGE = "$SHARELATEX_DOCKER_REPOS/clsi:$BRANCH_NAME-$BUILD_NUMBER"
-          }
           stages {
             stage('Production build') {
               environment {
-                IMAGE_BRANCH = "$SHARELATEX_DOCKER_REPOS/clsi:$BRANCH_NAME"
-                IMAGE_BRANCH_DEV = "$SHARELATEX_DOCKER_REPOS/clsi:dev"
+                TARGET = '-prod'
+                R_TARGET = ''
               }
               stages {
                 stage('Pull production cache') {
                   steps {
-                    sh '''
-                      docker pull $IMAGE_BRANCH \
-                      && docker tag $IMAGE_BRANCH $IMAGE_CI-prod-cache \
-                      || (docker pull $IMAGE_BRANCH_DEV \
-                      && docker tag $IMAGE_BRANCH_DEV $IMAGE_CI-prod-cache) \
-                      || echo 'no prod layer build cache available'
-                    '''
+                    sh 'make pull_cache'
                   }
                   post {
                     cleanup {
-                      sh '''
-                        docker rmi --force \
-                          $IMAGE_BRANCH \
-                          $IMAGE_BRANCH_DEV \
-                      '''
+                      sh 'make clean_pull_cache'
                     }
                   }
                 }
                 stage('Build production') {
                   steps {
-                    sh 'docker pull $IMAGE-dev'
-                    sh 'docker tag $IMAGE-dev $IMAGE_CI-dev'
+                    sh 'make build_dev_with_cache'
                     sh 'make build_prod'
                   }
                   post {
                     cleanup {
-                      sh 'docker rmi --force $IMAGE-dev $IMAGE_CI-dev'
+                      sh 'make clean_stage_images'
                     }
                   }
                 }
                 stage('docker push') {
                   steps {
-                    sh 'docker tag $IMAGE_CI-prod $IMAGE'
-                    sh 'docker push $IMAGE'
-                    sh 'docker tag $IMAGE $IMAGE_BRANCH'
-                    sh 'docker push $IMAGE_BRANCH'
+                    sh 'make push_cache_hot'
+                    sh 'make push_target'
                   }
                   post {
                     cleanup {
-                      sh '''
-                        docker rmi --force \
-                          $IMAGE \
-                          $IMAGE_BRANCH \
-                      '''
+                      sh 'make clean_push'
                     }
                   }
                 }
@@ -236,7 +171,7 @@ pipeline {
           }
           post {
             cleanup {
-              sh 'make clean_ci'
+              sh 'make clean_build'
             }
           }
         }

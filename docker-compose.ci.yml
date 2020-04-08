@@ -6,7 +6,7 @@ version: "3.1"
 
 services:
   test_unit:
-    image: ci/$PROJECT_NAME:$BRANCH_NAME-$BUILD_NUMBER
+    image: ${IMAGE_CI}-dev
     command:
       - npx
       - mocha
@@ -21,8 +21,7 @@ services:
       - ./output:/home/node:z
 
   test_acceptance:
-    build: .
-    image: ci/$PROJECT_NAME:$BRANCH_NAME-$BUILD_NUMBER
+    image: ${IMAGE_CI}-dev
     environment:
       LOG_LEVEL: fatal
       MOCHA_GREP: ${MOCHA_GREP}
