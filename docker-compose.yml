@@ -30,5 +30,4 @@ services:
     command: npm run test:acceptance
     tmpfs:
       - /app/cache:uid=1000,gid=1000
-      - /app/compiles:uid=1000,gid=1000
       - /app/db:uid=1000,gid=1000
