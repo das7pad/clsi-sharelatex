@@ -47,3 +47,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:rw,z
       - ./compiles:/app/compiles:z
       - ./cache:/app/cache:z
+    tmpfs:
+      - /app/cache:uid=1000,gid=1000
+      - /app/compiles:uid=1000,gid=1000
+      - /app/db:uid=1000,gid=1000

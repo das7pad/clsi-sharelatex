@@ -30,3 +30,5 @@ RUN /docker_cleanup.sh make build_app
 RUN DATA_DIRS="cache compiles db" \
 &&  mkdir -p ${DATA_DIRS} \
 &&  chown node:node ${DATA_DIRS}
+
+VOLUME /app/cache /app/compiles /app/db
