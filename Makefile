@@ -70,11 +70,13 @@ UNIT_TEST_DOCKER_COMPOSE ?= \
 	COMPOSE_PROJECT_NAME=unit_test_$(BUILD_DIR_NAME) $(DOCKER_COMPOSE)
 
 test: test_unit
-test_unit:
+test_unit: test_unit_app
+test_unit_app:
 	$(UNIT_TEST_DOCKER_COMPOSE) run --rm test_unit
 
 clean_ci: clean_test_unit
-clean_test_unit:
+clean_test_unit: clean_test_unit_app
+clean_test_unit_app:
 	$(UNIT_TEST_DOCKER_COMPOSE) down --timeout 0
 
 ACCEPTANCE_TEST_DOCKER_COMPOSE ?= \
