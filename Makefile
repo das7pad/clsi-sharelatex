@@ -264,6 +264,7 @@ clean_push:
 		$(IMAGE_CACHE_HOT)$(R_TARGET) \
 
 prepare_ci_stage: build_dev_with_cache
+build_dev_with_cache: pull_node
 build_dev_with_cache:
 	docker pull $(IMAGE)-dev-deps
 	docker tag $(IMAGE)-dev-deps $(IMAGE_CI)-dev-deps
