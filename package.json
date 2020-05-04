@@ -28,7 +28,7 @@
     "fs-extra": "^8.1.0",
     "lockfile": "^1.0.3",
     "logger-sharelatex": "git+https://github.com/das7pad/logger-sharelatex.git#bef2078daae2433a43e61db306e301398199daa0",
-    "metrics-sharelatex": "git+https://github.com/das7pad/metrics-sharelatex.git#3aa1de4fba521fc0e7969e619dec8f169f0d889f",
+    "metrics-sharelatex": "git+https://github.com/das7pad/metrics-sharelatex.git#471b0a35d8125818393738cb95702367add6d203",
     "mkdirp": "0.3.5",
     "mysql": "^2.17.1",
     "request": "^2.21.0",
