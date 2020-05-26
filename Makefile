@@ -9,6 +9,10 @@ else
 git = sh -c 'false'
 endif
 
+PWD ?= $(shell pwd)
+SUDO_UID ?= $(shell id -u)
+SUDO_GID ?= $(shell id -g)
+
 BUILD_NUMBER ?= local
 BRANCH_NAME ?= $(shell $(git) rev-parse --abbrev-ref HEAD || echo master)
 COMMIT ?= $(shell $(git) rev-parse HEAD || echo HEAD)
