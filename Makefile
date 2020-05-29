@@ -13,18 +13,15 @@ PWD ?= $(shell pwd)
 SUDO_UID ?= $(shell id -u)
 SUDO_GID ?= $(shell id -g)
 
-BUILD_NUMBER ?= local
-BRANCH_NAME ?= $(shell $(git) rev-parse --abbrev-ref HEAD || echo master)
-COMMIT ?= $(shell $(git) rev-parse HEAD || echo HEAD)
-RELEASE ?= $(shell $(git) describe --tags || echo v0.0.0 | sed 's/-g/+/;s/^v//')
-PROJECT_NAME = clsi
-BUILD_DIR_NAME = $(shell pwd | xargs basename | tr -cd '[a-zA-Z0-9_.\-]')
+export BUILD_NUMBER ?= local
+export BRANCH_NAME ?= $(shell $(git) rev-parse --abbrev-ref HEAD || echo master)
+export COMMIT ?= $(shell $(git) rev-parse HEAD || echo HEAD)
+export RELEASE ?= \
+	$(shell $(git) describe --tags || echo v0.0.0 | sed 's/-g/+/;s/^v//')
+export PROJECT_NAME = clsi
+export BUILD_DIR_NAME = $(shell pwd | xargs basename | tr -cd '[a-zA-Z0-9_.\-]')
 DOCKER_COMPOSE_FLAGS ?= -f docker-compose.yml
-DOCKER_COMPOSE := BUILD_NUMBER=$(BUILD_NUMBER) \
-	BRANCH_NAME=$(BRANCH_NAME) \
-	PROJECT_NAME=$(PROJECT_NAME) \
-	MOCHA_GREP=${MOCHA_GREP} \
-	docker-compose ${DOCKER_COMPOSE_FLAGS}
+DOCKER_COMPOSE := docker-compose $(DOCKER_COMPOSE_FLAGS)
 
 export DOCKER_REGISTRY ?= local
 export SHARELATEX_DOCKER_REPOS ?= $(DOCKER_REGISTRY)/sharelatex
