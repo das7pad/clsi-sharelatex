@@ -74,6 +74,7 @@ test: test_unit
 test_unit: test_unit_app
 test_unit_app:
 	$(UNIT_TEST_DOCKER_COMPOSE) run --rm test_unit
+	$(MAKE) clean_test_unit_app
 
 clean_ci: clean_test_unit
 clean_test_unit: clean_test_unit_app
@@ -101,6 +102,7 @@ endif
 
 test_acceptance_app_run:
 	$(ACCEPTANCE_TEST_DOCKER_COMPOSE) run --rm test_acceptance
+	$(MAKE) clean_test_acceptance_app
 
 test_acceptance_app_run: test_acceptance_pre_run
 test_acceptance_pre_run:
