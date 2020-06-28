@@ -154,6 +154,8 @@ STATE = "up"
 loadTcpServer = net.createServer (socket) ->
 	remoteAddress = socket.remoteAddress
 	remotePort = socket.remotePort
+	# disable any queuing
+	socket.setNoDelay()
 
 	socket.on "error", (err)->
 		if err.code == "ECONNRESET"
