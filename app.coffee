@@ -158,9 +158,6 @@ loadTcpServer = net.createServer (socket) ->
 	socket.setNoDelay()
 
 	socket.on "error", (err)->
-		if err.code == "ECONNRESET"
-			# this always comes up, we don't know why
-			return
 		logger.err {
 			err,
 			bufferSize: socket.bufferSize,
@@ -189,6 +186,9 @@ loadTcpServer = net.createServer (socket) ->
 	else
 		socket.write("#{STATE}\n", "ASCII")
 		socket.end()
+
+	# drop the connection right away
+	socket.destroy()
 
 loadHttpServer = express()
 
