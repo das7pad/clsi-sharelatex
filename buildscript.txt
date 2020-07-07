@@ -1,4 +1,4 @@
 clsi
 --language=coffeescript
---node-version=12.18.0
+--node-version=12.18.2
 --data-dirs=cache,compiles,db
