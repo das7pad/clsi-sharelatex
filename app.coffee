@@ -1,4 +1,4 @@
-Metrics = require "metrics-sharelatex"
+Metrics = require "@overleaf/metrics"
 Metrics.initialize("clsi")
 
 CompileController = require "./app/js/CompileController"
